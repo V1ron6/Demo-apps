@@ -3,6 +3,7 @@ package com.v1ron6.counter
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import com.triskelion.sdk.Triskelion
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
@@ -27,10 +28,25 @@ class MainActivity : AppCompatActivity() {
             updateCounter()
         }
 
+        val statusView = findViewById<TextView>(R.id.update_status)
+        val version = packageManager.getPackageInfo(packageName, 0).versionName
+        findViewById<TextView>(R.id.version_label).text = "Version $version"
+        statusView.text = CounterApp.status
+        CounterApp.listener = { statusView.text = it }
+        findViewById<Button>(R.id.button_check_updates).setOnClickListener {
+            statusView.text = "Checking..."
+            Triskelion.checkNow()
+        }
+
         findViewById<Button>(R.id.button_reset).setOnClickListener {
             counter = 0
             updateCounter()
         }
+    }
+
+    override fun onDestroy() {
+        CounterApp.listener = null
+        super.onDestroy()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

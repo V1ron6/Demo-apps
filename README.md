@@ -37,3 +37,22 @@ To install the required Windows packages and build the app:
 Set-ExecutionPolicy -Scope Process Bypass
 .\windows-counter\build.ps1
 ```
+
+## Updates with Triskelion
+
+Both apps embed the Triskelion update library (`triskelion/` folder, a copy of the Triskelion repo; use a git submodule in real projects).
+
+Both apps are already pointed at `https://triskelion.onrender.com` with the public key of `counter.key` (`CounterApp.kt` and `main.cpp`). App id is `counter` on both platforms. Register the app once on the server with that public key (see `triskelion/USAGE_INSTRUCTIONS.md`, section 2). Versions must be `x.y.z` (`versionName` in `app/build.gradle.kts`, `COUNTER_VERSION` in `windows-counter/CMakeLists.txt`).
+
+Android: `settings.gradle.kts` already includes the SDK module; it needs the NDK and CMake from the SDK Manager. Windows: `build.ps1` installs OpenSSL through vcpkg.
+
+Publish a new version (see `triskelion/README.md`):
+
+```bash
+node triskelion/tools/sign/sign.js publish --key counter.key --app counter --platform android \
+  --version 1.1.0 --file app-release.apk
+node triskelion/tools/sign/sign.js publish --key counter.key --app counter --platform windows \
+  --version 1.1.0 --file CounterApp.exe
+```
+
+Build the new version with the version number bumped first, otherwise the app would see itself as outdated forever.

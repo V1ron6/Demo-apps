@@ -1,0 +1,43 @@
+name: Windows build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Check the Triskelion library is in the repo
+        shell: pwsh
+        run: |
+          if (-not (Test-Path triskelion/sdk-windows/CMakeLists.txt)) {
+            throw "triskelion/ is missing. Add the Triskelion repo as a submodule or copy it to Demo-apps/triskelion."
+          }
+
+      - name: Install OpenSSL (vcpkg, static)
+        shell: pwsh
+        run: '& "$env:VCPKG_INSTALLATION_ROOT\vcpkg.exe" install openssl:x64-windows-static'
+
+      - name: Configure
+        shell: pwsh
+        run: >
+          cmake -S windows-counter -B build -A x64
+          "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
+          -DVCPKG_TARGET_TRIPLET=x64-windows-static
+          -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build --config Release --parallel
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CounterApp-windows
+          path: build/Release/CounterApp.exe
+          if-no-files-found: error

@@ -84,9 +84,22 @@ if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
     throw "CMake is unavailable. Restart the shell and rerun build.ps1."
 }
 
+# Triskelion needs OpenSSL (Ed25519 + SHA-256). Get it through vcpkg, cloned next to the build if missing.
+$vcpkgRoot = if ($env:VCPKG_ROOT) { $env:VCPKG_ROOT } else { Join-Path $PSScriptRoot "vcpkg" }
+if (-not (Test-Path (Join-Path $vcpkgRoot "vcpkg.exe"))) {
+    if (-not (Test-Path $vcpkgRoot)) {
+        git clone https://github.com/microsoft/vcpkg $vcpkgRoot
+    }
+    & (Join-Path $vcpkgRoot "bootstrap-vcpkg.bat") -disableMetrics
+}
+& (Join-Path $vcpkgRoot "vcpkg.exe") install openssl:x64-windows-static
+$toolchain = Join-Path $vcpkgRoot "scripts\buildsystems\vcpkg.cmake"
+
 $sourceDirectory = $PSScriptRoot
 
-cmake -S $sourceDirectory -B $BuildDirectory -A x64
+cmake -S $sourceDirectory -B $BuildDirectory -A x64 `
+    "-DCMAKE_TOOLCHAIN_FILE=$toolchain" -DVCPKG_TARGET_TRIPLET=x64-windows-static `
+    -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
 cmake --build $BuildDirectory --config $BuildType --parallel
 
 $executable = Join-Path $BuildDirectory "$BuildType\CounterApp.exe"

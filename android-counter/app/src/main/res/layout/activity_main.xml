@@ -40,4 +40,24 @@
             android:layout_height="wrap_content"
             android:text="@string/increment" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/version_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:textSize="14sp" />
+
+    <Button
+        android:id="@+id/button_check_updates"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Check for updates" />
+
+    <TextView
+        android:id="@+id/update_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textSize="14sp" />
 </LinearLayout>

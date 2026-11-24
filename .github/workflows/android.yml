@@ -1,0 +1,43 @@
+name: Android build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Check the Triskelion library is in the repo
+        run: |
+          test -f triskelion/sdk-android/build.gradle.kts || {
+            echo "triskelion/ is missing. Add the Triskelion repo as a submodule or copy it to Demo-apps/triskelion."
+            exit 1
+          }
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install NDK and CMake (needed for the native updater)
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.0.12077973" "cmake;3.22.1"
+
+      - name: Build debug APK
+        working-directory: android-counter
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-counter-apk
+          path: android-counter/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
